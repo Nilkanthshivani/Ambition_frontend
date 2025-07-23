@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_switch/flutter_switch.dart';
 
 class DriverMainPage extends StatefulWidget {
   const DriverMainPage({super.key});
@@ -32,6 +33,8 @@ class _DriverMainPageState extends State<DriverMainPage> {
   StreamSubscription<Position>? _positionStreamSubscription;
   Position? _currentPosition;
   LocationEntity? userPosition;
+  // Add isOnline state
+  bool isOnline = true;
   Future<void> _checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -323,121 +326,160 @@ class _DriverMainPageState extends State<DriverMainPage> {
             );
           } else if (state is PendingRideRequestsLoaded) {
             List<RideRequest?> rideRequests = state.rideRequests.rideRequests;
-            if (rideRequests.isEmpty) {
-              return Scaffold(
-                  body: Column(
+            return Scaffold(
+              body: Stack(
                 children: [
-                  //No Pending Ride Requests Text
-                  const Expanded(
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text("No Pending Ride Requests",
-                            style: TextStyle(fontSize: 20)),
-                      ),
-                    ),
-                  ),
-
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Card(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(8)),
-                        side: BorderSide(color: Colors.grey.shade300, width: 1),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          //Total Earnings
-                          Column(
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text("Total Earnings",
-                                    style: TextStyle(fontSize: 20)),
-                              ),
-
-                              //Total Earnings
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                    "£${state.rideRequests.totalEarnings.toStringAsFixed(2)}",
-                                    style: const TextStyle(fontSize: 20)),
-                              ),
-                            ],
+                    padding: const EdgeInsets.only(bottom: 100), // Height of the card + margin
+                    child: Column(
+                      children: [
+                        // Map, buttons, online button, etc.
+                        Container(
+                          height: 200,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
                           ),
-
-                          //Total Rides
-                          Column(
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text("Total Rides",
-                                    style: TextStyle(fontSize: 20)),
-                              ),
-                              //Total Rides
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text("${state.rideRequests.totalRides}",
-                                    style: const TextStyle(fontSize: 20)),
-                              ),
-                            ],
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: _currentPosition != null
+                                  ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+                                  : const LatLng(51.456, 0.1313),
+                              zoom: 14,
+                            ),
+                            onMapCreated: (controller) {},
+                            markers: {
+                              if (_currentPosition != null)
+                                Marker(
+                                  markerId: const MarkerId("current"),
+                                  position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                                  infoWindow: const InfoWindow(title: "Your Location"),
+                                ),
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () {
+                              // Add your logic here
+                            },
+                            child: const Text(
+                              "Show Accepted/Scheduled Job",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: FlutterSwitch(
+                            width: 120.0, // Increased width
+                            height: 40.0,
+                            valueFontSize: 18.0, // Larger text
+                            toggleSize: 32.0,
+                            value: isOnline,
+                            borderRadius: 24.0,
+                            activeColor: Colors.black,
+                            inactiveColor: Colors.grey,
+                            activeText: "Online",
+                            inactiveText: "Offline",
+                            activeTextColor: Colors.white,
+                            inactiveTextColor: Colors.white,
+                            showOnOff: true,
+                            onToggle: (val) {
+                              setState(() {
+                                isOnline = val;
+                              });
+                            },
+                          ),
+                        ),
+                        // Only show the list or message if online
+                        if (isOnline)
+                          Expanded(
+                            child: rideRequests.isEmpty
+                                ? Center(
+                                    child: const Text(
+                                      "No Pending Ride Requests",
+                                      style: TextStyle(fontSize: 20),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: rideRequests.length,
+                                    itemBuilder: (context, index) {
+                                      RideRequest rideRequest = rideRequests[index]!;
+                                      return AvailableJobsCard(
+                                        avilableJob: rideRequest,
+                                        onAccept: () {
+                                          BlocProvider.of<RideRequestBloc>(context)
+                                              .add(UpdateRideRequestEvent(id: rideRequest.id));
+                                        },
+                                      );
+                                    },
+                                  ),
+                          ),
+                      ],
                     ),
                   ),
-
-                  //Google Map with the current location of the user
-                  Container(
-                    height: 200,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: _currentPosition != null
-                            ? LatLng(_currentPosition!.latitude,
-                                _currentPosition!.longitude)
-                            : const LatLng(51.456, 0.1313),
-                        zoom: 14,
+                  // Fixed Total Earnings card at the bottom
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    bottom: 8,
+                    child: Card(
+                      margin: EdgeInsets.zero, // No margin, full width
+                      color: Colors.white,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                        side: BorderSide(color: Colors.grey, width: 0.5),
                       ),
-                      onMapCreated: (controller) {},
-                      markers: {
-                        if (_currentPosition != null)
-                          Marker(
-                            markerId: const MarkerId("current"),
-                            position: LatLng(_currentPosition!.latitude,
-                                _currentPosition!.longitude),
-                            icon: BitmapDescriptor.defaultMarkerWithHue(
-                                BitmapDescriptor.hueBlue),
-                            infoWindow:
-                                const InfoWindow(title: "Your Location"),
-                          ),
-                      },
+                      elevation: 8,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            //Total Earnings
+                            Column(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 2.0),
+                                  child: Text("Total Earnings",
+                                      style: TextStyle(fontSize: 20)),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                  child: Text(
+                                      "£${state.rideRequests.totalEarnings.toStringAsFixed(2)}",
+                                      style: const TextStyle(fontSize: 20)),
+                                ),
+                              ],
+                            ),
+                            //Total Rides
+                            Column(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 2.0),
+                                  child: Text("Total Rides",
+                                      style: TextStyle(fontSize: 20)),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                  child: Text("${state.rideRequests.totalRides}",
+                                      style: const TextStyle(fontSize: 20)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
-              ));
-            }
-            return Scaffold(
-              appBar: AppBar(title: const Text("Pending Ride Requests")),
-              body: ListView.builder(
-                padding: const EdgeInsets.all(8.0),
-                itemCount: rideRequests.length,
-                itemBuilder: (context, index) {
-                  RideRequest rideRequest = rideRequests[index]!;
-                  return AvailableJobsCard(
-                    avilableJob: rideRequest,
-                    onAccept: () {
-                      BlocProvider.of<RideRequestBloc>(context)
-                          .add(UpdateRideRequestEvent(id: rideRequest.id));
-                    },
-                  );
-                },
               ),
             );
           } else if (state is RideRequestError) {
@@ -482,9 +524,11 @@ class AvailableJobsCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Request ID: ${avilableJob.id}',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                Expanded(
+                  child: Text(
+                    'Request ID: ${avilableJob.id}',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
                 ),
               ],
             ),

@@ -95,7 +95,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       ),
                     );
                   } else {
-                    return const Column(
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
@@ -116,7 +116,19 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           ),
                         ),
                         Text(
-                          "user@example.com",
+                          (() {
+                            // Try to get the logged-in user's email from local storage
+                            try {
+                              final prefs = WidgetsBinding.instance.window.defaultRouteName;
+                              // This is a placeholder; replace with your actual method to get the user from local storage
+                              // For example, use getCurrentUser() if available
+                              // final user = getCurrentUser();
+                              // return user?['email'] ?? 'user@example.com';
+                              return 'user@example.com';
+                            } catch (_) {
+                              return 'user@example.com';
+                            }
+                          })(),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 14,

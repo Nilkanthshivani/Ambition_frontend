@@ -33,6 +33,8 @@ class MyApp extends StatelessWidget {
             sendUserLoginOtpUsecase: sendUserLoginOtpUsecase,
             resendUserLoginOtpUsecase: resendUserLoginOtpUsecase,
             verifyUserLoginOtpUsecase: verifyUserLoginOtpUsecase,
+            signInWithEmail: signInWithEmail,
+            signInWithGoogle: signInWithGoogle,
             getAllVehicles: getAllVehicles,
             createDriver: createDriver,
             saveDriverLocally: saveDriverLocally,

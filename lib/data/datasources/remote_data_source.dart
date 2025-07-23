@@ -1035,4 +1035,40 @@ Future<Response> createDriver(Map<String, dynamic> driver) async {
       throw Exception('Failed to delete instruction');
     }
   }
+
+  // Email sign-in API
+  Future<Response> signInWithEmail({
+    required String email,
+    required String password,
+    required String latitude,
+    required String longitude,
+  }) async {
+    final response = await dio.post(
+      'https://demo.innoplixit.com/api/users/auth/email',
+      data: {
+        'email': email,
+        'password': password,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+    );
+    return response;
+  }
+
+  // Google sign-in API
+  Future<Response> signInWithGoogle({
+    required String idToken,
+    required String latitude,
+    required String longitude,
+  }) async {
+    final response = await dio.post(
+      'https://demo.innoplixit.com/api/users/firebase-google-login',
+      data: {
+        'idToken': idToken,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+    );
+    return response;
+  }
 }

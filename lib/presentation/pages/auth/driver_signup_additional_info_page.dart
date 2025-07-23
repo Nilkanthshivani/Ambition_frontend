@@ -11,9 +11,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DriverSignupAdditionalInfoPage extends StatefulWidget {
-  const DriverSignupAdditionalInfoPage(
-      {super.key, required this.driverFormData});
+  const DriverSignupAdditionalInfoPage({
+    super.key,
+    required this.driverFormData,
+    this.userId,
+  });
   final DriverFormData driverFormData;
+  final String? userId;
 
   @override
   State<DriverSignupAdditionalInfoPage> createState() =>
@@ -22,6 +26,11 @@ class DriverSignupAdditionalInfoPage extends StatefulWidget {
 
 class _DriverSignupAdditionalInfoPageState
     extends State<DriverSignupAdditionalInfoPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

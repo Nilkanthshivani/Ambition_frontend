@@ -154,4 +154,34 @@ class UserRepositoryImpl implements UserRepository {
     final resp = await userRemoteDataSource.resendUserTempOtp(data);
     return resp.data;
   }
+
+  @override
+  Future<Map<String, dynamic>> signInWithEmail({
+    required String email,
+    required String password,
+    required String latitude,
+    required String longitude,
+  }) async {
+    final resp = await userRemoteDataSource.signInWithEmail(
+      email: email,
+      password: password,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    return resp.data;
+  }
+
+  @override
+  Future<Map<String, dynamic>> signInWithGoogle({
+    required String idToken,
+    required String latitude,
+    required String longitude,
+  }) async {
+    final resp = await userRemoteDataSource.signInWithGoogle(
+      idToken: idToken,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    return resp.data;
+  }
 }

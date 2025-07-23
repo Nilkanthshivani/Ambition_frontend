@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:ambition_delivery/data/models/driver_form_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +10,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../widgets/user_type_selector.dart';
 import 'emailsignup.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'package:ambition_delivery/presentation/pages/auth/driver_signup_additional_info_page.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -200,12 +205,18 @@ class _SignupPageState extends State<SignupPage> {
                             backgroundColor: Colors.transparent,
                             radius: 25,
                             child: IconButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                Position position = await Geolocator.getCurrentPosition(
+                                  desiredAccuracy: LocationAccuracy.high,
+                                );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          const EmailSignupPage()),
+                                    builder: (context) => EmailSignupPage(
+                                      latitude: position.latitude.toString(),
+                                      longitude: position.longitude.toString(),
+                                    ),
+                                  ),
                                 );
                               },
                               icon: const Icon(
@@ -254,53 +265,30 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  void _handlePassengerSignUp(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      final phoneNumber = driverFormData.phoneNumber ?? "";
-      context
-          .read<AuthBloc>()
-          .add(SendUserTempOtpEvent(otp: {'phone': phoneNumber}));
-    } else {
-      context.read<AuthBloc>().add(
-          const InvalidFormEvent(message: "Please fill a valid phone number"));
-    }
-  }
-
-  void _handleDriverSignUp(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      final phoneNumber = driverFormData.phoneNumber ?? "";
-      context
-          .read<AuthBloc>()
-          .add(SendDriverTempOtpEvent(otp: {'phone': phoneNumber}));
-    } else {
-      context.read<AuthBloc>().add(
-          const InvalidFormEvent(message: "Please fill a valid phone number"));
-    }
-  }
-
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
-      final GoogleSignIn _googleSignIn = GoogleSignIn();
+      final GoogleSignIn _googleSignIn = GoogleSignIn(
+        clientId: '54199172130-oeh18658op3b94bu7g62o4607vt5m599.apps.googleusercontent.com',
+      );
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        // User cancelled the sign-in
         print("Google Sign-In was cancelled by the user.");
         return;
       }
 
       print("🔵 Google User Info:");
-      print("Display Name: ${googleUser.displayName}");
-      print("Email: ${googleUser.email}");
-      print("ID: ${googleUser.id}");
-      print("Photo URL: ${googleUser.photoUrl}");
+      print("Display Name:  {googleUser.displayName}");
+      print("Email:  {googleUser.email}");
+      print("ID:  {googleUser.id}");
+      print("Photo URL:  {googleUser.photoUrl}");
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       print("🟣 Google Auth Tokens:");
-      print("Access Token: ${googleAuth.accessToken}");
-      print("ID Token: ${googleAuth.idToken}");
+      print("Access Token:  {googleAuth.accessToken}");
+      print("ID Token:  {googleAuth.idToken}");
 
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
@@ -311,26 +299,14 @@ class _SignupPageState extends State<SignupPage> {
           await FirebaseAuth.instance.signInWithCredential(credential);
       final user = userCredential.user;
 
-      if (user != null) {
-        print("🟢 Firebase User Info:");
-        print("UID: ${user.uid}");
-        print("Display Name: ${user.displayName}");
-        print("Email: ${user.email}");
-        print("Photo URL: ${user.photoURL}");
-        print("Phone Number: ${user.phoneNumber}");
-        print("Email Verified: ${user.emailVerified}");
-        print(
-            "Provider ID: ${user.providerData.map((e) => e.providerId).join(", ")}");
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Signed in as ${user.displayName ?? user.email}'),
-          ),
-        );
-
-        Navigator.pushReplacementNamed(context, '/home');
+      if (user != null && googleAuth.idToken != null) {
+        if (_selectedItem == 'Passenger') {
+          _handlePassengerSignUp(context, idToken: googleAuth.idToken!);
+        } else if (_selectedItem == 'Driver') {
+          _handleDriverSignUp(context, name: googleUser.displayName, email: googleUser.email);
+        }
       } else {
-        print("❌ Firebase user is null.");
+        print("❌ Firebase user is null or idToken is null.");
       }
     } catch (e, stackTrace) {
       print("Google sign-in error: $e");
@@ -338,6 +314,74 @@ class _SignupPageState extends State<SignupPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google sign-in failed: $e')),
       );
+    }
+  }
+
+  void _handlePassengerSignUp(BuildContext context, {String? idToken}) {
+    if (_formKey.currentState!.validate()) {
+      final phoneNumber = driverFormData.phoneNumber ?? "";
+      if (idToken != null) {
+        // Google sign-in flow
+        Position position = driverFormData.currentLocation ?? Position(
+          latitude: 0,
+          longitude: 0,
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          heading: 0,
+          speed: 0,
+          speedAccuracy: 0,
+          altitudeAccuracy: 0,
+          headingAccuracy: 0,
+        );
+        final requestBody = {
+          'idToken': idToken,
+          'latitude': position.latitude.toString(),
+          'longitude': position.longitude.toString(),
+        };
+        log('🚀 Passenger creation request body: $requestBody');
+        context.read<AuthBloc>().add(SignInWithGoogleEvent(
+          idToken: idToken,
+          latitude: position.latitude.toString(),
+          longitude: position.longitude.toString(),
+        ));
+      } else {
+        // Email sign-up flow
+        context
+            .read<AuthBloc>()
+            .add(SendUserTempOtpEvent(otp: {'phone': phoneNumber}));
+      }
+    } else {
+      context.read<AuthBloc>().add(
+          const InvalidFormEvent(message: "Please fill a valid phone number"));
+    }
+  }
+
+  void _handleDriverSignUp(BuildContext context, {String? name, String? email}) {
+    if (_formKey.currentState!.validate()) {
+      if (name != null) {
+        // Google sign-in flow
+        final driverFormData = DriverFormData();
+        if (name != null) driverFormData.nameController.text = name;
+        if (email != null) driverFormData.emailController.text = email;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DriverSignupAdditionalInfoPage(
+              driverFormData: driverFormData,
+            ),
+          ),
+        );
+      } else {
+        // Email sign-up flow
+        final phoneNumber = driverFormData.phoneNumber ?? "";
+        context
+            .read<AuthBloc>()
+            .add(SendDriverTempOtpEvent(otp: {'phone': phoneNumber}));
+      }
+    } else {
+      context.read<AuthBloc>().add(
+          const InvalidFormEvent(message: "Please fill a valid phone number"));
     }
   }
 

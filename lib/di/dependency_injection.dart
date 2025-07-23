@@ -87,6 +87,8 @@ import 'package:ambition_delivery/domain/usecases/update_user_location.dart';
 import 'package:ambition_delivery/domain/usecases/get_chat_messages_by_id.dart';
 import 'package:ambition_delivery/domain/usecases/get_conversation_by_id.dart';
 import 'package:ambition_delivery/domain/usecases/send_message.dart';
+import 'package:ambition_delivery/domain/usecases/sign_in_with_email.dart';
+import 'package:ambition_delivery/domain/usecases/sign_in_with_google.dart';
 
 import '../main.dart';
 
@@ -142,6 +144,8 @@ Future<void> setupDependencies() async {
   sendUserLoginOtpUsecase = SendUserLoginOtpUsecase(userRepository);
   resendUserLoginOtpUsecase = ResendUserLoginOtpUsecase(userRepository);
   verifyUserLoginOtpUsecase = VerifyUserLoginOtpUsecase(userRepository);
+  signInWithEmail = SignInWithEmail(userRepository);
+  signInWithGoogle = SignInWithGoogle(userRepository);
   getAllVehicles = GetAllVehicles(vehicleRepository);
   createDriver = CreateDriver(driverRepository);
   getDriver = GetDriver(driverRepository);
@@ -234,6 +238,8 @@ late GetUser getUser;
 late SendUserLoginOtpUsecase sendUserLoginOtpUsecase;
 late ResendUserLoginOtpUsecase resendUserLoginOtpUsecase;
 late VerifyUserLoginOtpUsecase verifyUserLoginOtpUsecase;
+late SignInWithEmail signInWithEmail;
+late SignInWithGoogle signInWithGoogle;
 late GetAllVehicles getAllVehicles;
 late CreateDriver createDriver;
 late GetDriver getDriver;

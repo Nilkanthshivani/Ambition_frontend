@@ -46,6 +46,8 @@ import '../../domain/entities/vehicle.dart';
 import '../../domain/usecases/create_driver.dart';
 import '../../domain/usecases/get_all_vehicles.dart';
 import '../../domain/usecases/logout_locally.dart';
+import '../../domain/usecases/sign_in_with_email.dart';
+import '../../domain/usecases/sign_in_with_google.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -95,6 +97,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SendUserTempOtpUsecase sendUserTempOtpUsecase;
   final VerifyUserTempOtpUsecase verifyUserTempOtpUsecase;
   final ResendUserTempOtpUsecase resendUserTempOtpUsecase;
+  final SignInWithEmail signInWithEmail;
+  final SignInWithGoogle signInWithGoogle;
 
   AuthBloc({
     required this.createUser,
@@ -139,6 +143,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.sendUserTempOtpUsecase,
     required this.verifyUserTempOtpUsecase,
     required this.resendUserTempOtpUsecase,
+    required this.signInWithEmail,
+    required this.signInWithGoogle,
   }) : super(AuthInitial()) {
     on<SignUpEvent>(_onSignUp);
     on<SendUserLoginOtpEvent>(_onSendUserLoginOtp);
@@ -173,6 +179,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SendUserTempOtpEvent>(_onSendUserTempOtp);
     on<VerifyUserTempOtpEvent>(_onVerifyUserTempOtp);
     on<ResendUserTempOtpEvent>(_onResendUserTempOtp);
+    on<SignInWithEmailEvent>(_onSignInWithEmail);
+    on<SignInWithGoogleEvent>(_onSignInWithGoogle);
   }
 
   //getter for current user id
@@ -759,6 +767,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } else {
         emit(AuthFailure(error: e.message ?? 'An error occurred'));
       }
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onSignInWithEmail(
+      SignInWithEmailEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final result = await signInWithEmail(
+        email: event.email,
+        password: event.password,
+        latitude: event.latitude,
+        longitude: event.longitude,
+      );
+      await saveToken(result['token']);
+      await saveUserLocally(result['user']); // Match OTP login flow
+      emit(AuthSuccess());
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onSignInWithGoogle(
+      SignInWithGoogleEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final result = await signInWithGoogle(
+        idToken: event.idToken,
+        latitude: event.latitude,
+        longitude: event.longitude,
+      );
+      await saveToken(result['token']);
+      await saveUserLocally(result['user']);
+      emit(AuthSuccess());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }

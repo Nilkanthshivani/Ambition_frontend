@@ -24,4 +24,15 @@ abstract class UserRepository {
   Future<void> deleteUserByPhoneNumber(String phoneNumber);
   Future<LocationEntity?> getUserLocation(String id);
   Future<void> updateUserLocation(String id, Map<String, dynamic> location);
+  Future<Map<String, dynamic>> signInWithEmail({
+    required String email,
+    required String password,
+    required String latitude,
+    required String longitude,
+  });
+  Future<Map<String, dynamic>> signInWithGoogle({
+    required String idToken,
+    required String latitude,
+    required String longitude,
+  });
 }

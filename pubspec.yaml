@@ -65,6 +65,8 @@ dependencies:
   geocoding: ^4.0.0
   flutter_rating_bar: ^4.0.1
   sign_in_with_apple: ^7.0.1
+  flutter_switch: ^0.3.2
+  cloud_firestore: ^5.6.12
 
 # override dependencies
 dependency_overrides:

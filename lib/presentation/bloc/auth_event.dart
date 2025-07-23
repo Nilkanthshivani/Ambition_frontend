@@ -265,3 +265,35 @@ class VerifyDriverLoginOtpEvent extends AuthEvent {
   @override
   List<Object> get props => [otp];
 }
+
+class SignInWithEmailEvent extends AuthEvent {
+  final String email;
+  final String password;
+  final String latitude;
+  final String longitude;
+
+  const SignInWithEmailEvent({
+    required this.email,
+    required this.password,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  @override
+  List<Object> get props => [email, password, latitude, longitude];
+}
+
+class SignInWithGoogleEvent extends AuthEvent {
+  final String idToken;
+  final String latitude;
+  final String longitude;
+
+  const SignInWithGoogleEvent({
+    required this.idToken,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  @override
+  List<Object> get props => [idToken, latitude, longitude];
+}
