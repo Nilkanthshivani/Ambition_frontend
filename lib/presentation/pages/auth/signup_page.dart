@@ -206,7 +206,8 @@ class _SignupPageState extends State<SignupPage> {
                             radius: 25,
                             child: IconButton(
                               onPressed: () async {
-                                Position position = await Geolocator.getCurrentPosition(
+                                Position position =
+                                    await Geolocator.getCurrentPosition(
                                   desiredAccuracy: LocationAccuracy.high,
                                 );
                                 Navigator.push(
@@ -268,7 +269,8 @@ class _SignupPageState extends State<SignupPage> {
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
       final GoogleSignIn _googleSignIn = GoogleSignIn(
-        clientId: '54199172130-oeh18658op3b94bu7g62o4607vt5m599.apps.googleusercontent.com',
+        clientId:
+            '54199172130-oeh18658op3b94bu7g62o4607vt5m599.apps.googleusercontent.com',
       );
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -305,8 +307,10 @@ class _SignupPageState extends State<SignupPage> {
         } else if (_selectedItem == 'Driver') {
           // Prepare DriverFormData with Google name/email
           final driverFormData = DriverFormData();
-          if (googleUser.displayName != null) driverFormData.nameController.text = googleUser.displayName!;
-          if (googleUser.email != null) driverFormData.emailController.text = googleUser.email!;
+          if (googleUser.displayName != null)
+            driverFormData.nameController.text = googleUser.displayName!;
+          if (googleUser.email != null)
+            driverFormData.emailController.text = googleUser.email!;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -331,18 +335,19 @@ class _SignupPageState extends State<SignupPage> {
   void _handlePassengerSignUp(BuildContext context, {String? idToken}) {
     if (idToken != null) {
       // Google sign-in flow: do NOT require phone number
-      Position position = driverFormData.currentLocation ?? Position(
-        latitude: 0,
-        longitude: 0,
-        timestamp: DateTime.now(),
-        accuracy: 0,
-        altitude: 0,
-        heading: 0,
-        speed: 0,
-        speedAccuracy: 0,
-        altitudeAccuracy: 0,
-        headingAccuracy: 0,
-      );
+      Position position = driverFormData.currentLocation ??
+          Position(
+            latitude: 0,
+            longitude: 0,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0,
+            headingAccuracy: 0,
+          );
       final requestBody = {
         'idToken': idToken,
         'latitude': position.latitude.toString(),
@@ -350,10 +355,10 @@ class _SignupPageState extends State<SignupPage> {
       };
       log('�� Passenger creation request body: $requestBody');
       context.read<AuthBloc>().add(SignInWithGoogleEvent(
-        idToken: idToken,
-        latitude: position.latitude.toString(),
-        longitude: position.longitude.toString(),
-      ));
+            idToken: idToken,
+            latitude: position.latitude.toString(),
+            longitude: position.longitude.toString(),
+          ));
     } else {
       // Email sign-up flow: require phone number
       if (_formKey.currentState!.validate()) {
@@ -362,13 +367,14 @@ class _SignupPageState extends State<SignupPage> {
             .read<AuthBloc>()
             .add(SendUserTempOtpEvent(otp: {'phone': phoneNumber}));
       } else {
-        context.read<AuthBloc>().add(
-            const InvalidFormEvent(message: "Please fill a valid phone number"));
+        context.read<AuthBloc>().add(const InvalidFormEvent(
+            message: "Please fill a valid phone number"));
       }
     }
   }
 
-  void _handleDriverSignUp(BuildContext context, {String? name, String? email}) {
+  void _handleDriverSignUp(BuildContext context,
+      {String? name, String? email}) {
     if (_formKey.currentState!.validate()) {
       if (name != null) {
         // Google sign-in flow

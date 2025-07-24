@@ -2,7 +2,11 @@ import 'package:ambition_delivery/data/models/item_with_qty_model.dart';
 import 'package:ambition_delivery/data/models/location_model.dart';
 import 'package:ambition_delivery/data/models/polyline_point_model.dart';
 import 'package:ambition_delivery/data/models/ride_fare_model.dart';
+import 'package:ambition_delivery/domain/entities/driver.dart';
 import 'package:ambition_delivery/domain/entities/ride_request.dart';
+import 'package:ambition_delivery/domain/entities/car.dart';
+import 'package:ambition_delivery/domain/entities/location_entity.dart';
+import 'package:ambition_delivery/domain/entities/vehicle_category.dart';
 
 import 'custom_item_model.dart';
 import 'other_requirements_model.dart';
@@ -68,7 +72,9 @@ class RideRequestModel extends RideRequest {
       status: json['status'],
       createdAt: DateTime.parse(json['createdAt']).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt']).toLocal(),
-      driver: json['driver'] != null ? DriverModel.fromJson(json['driver']) : null,
+      driver: json['driver'] != null && json['driver'] is Map<String, dynamic>
+          ? DriverModel.fromJson(json['driver']).toEntity()
+          : null,
     );
   }
 
@@ -77,7 +83,6 @@ class RideRequestModel extends RideRequest {
       'id': super.id,
       'user': super.user,
       'driverId': super.driverId,
-      
       'carDriverId': super.carDriverId,
       'vehicleCategory': super.vehicleCategory,
       'carCategory': super.carCategory,

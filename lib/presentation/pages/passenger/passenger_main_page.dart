@@ -46,6 +46,8 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
   LocationEntity? _driverPosition;
   LocationEntity? _carDriverPosition;
 
+  Set<Polyline> _polylines = {};
+
   Future<void> _checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -152,6 +154,14 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
                     address: "Driver Address",
                     type: "Point",
                   );
+                  // Draw polyline to user (for ongoing jobs)
+                  if (_currentPosition != null) {
+                    _drawPolyline(
+                      LatLng(lat.toDouble(), long.toDouble()),
+                      LatLng(_currentPosition!.latitude,
+                          _currentPosition!.longitude),
+                    );
+                  }
                 });
               }
               if (state is CarDriverLocationReceived) {
@@ -175,7 +185,7 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
             builder: (context, state) {
           debugPrint("State: $state");
           if (state is OnGoingUserRideRequestLoaded) {
-            debugPrint("Ongoing ride status: "+state.rideRequest.status);
+            debugPrint("Ongoing ride status: " + state.rideRequest.status);
           }
           if (state is RideRequestLoading) {
             return const Scaffold(
@@ -185,6 +195,23 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
             );
           } else if (state is OnGoingUserRideRequestLoaded) {
             RideRequest rideRequest = state.rideRequest;
+
+            // Draw polyline from driver to user
+            if (_driverPosition != null && _currentPosition != null) {
+              _drawPolyline(
+                LatLng(_driverPosition!.coordinates[0].toDouble(),
+                    _driverPosition!.coordinates[1].toDouble()),
+                LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+              );
+            }
+            if (_driverPosition != null && rideRequest.pickupLocation != null) {
+              _drawPolyline(
+                LatLng(_driverPosition!.coordinates[0].toDouble(),
+                    _driverPosition!.coordinates[1].toDouble()),
+                LatLng(rideRequest.pickupLocation.coordinates[0].toDouble(),
+                    rideRequest.pickupLocation.coordinates[1].toDouble()),
+              );
+            }
 
             return Scaffold(
               appBar: AppBar(title: const Text("Ongoing Ride")),
@@ -278,7 +305,7 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
                         infoWindow: const InfoWindow(title: "Dropoff Location"),
                       ),
                     },
-                    polylines: state.polylines,
+                    polylines: _polylines,
                   ),
                   RideDetailsWidget(
                     rideRequest: rideRequest,
@@ -301,48 +328,69 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
                             padding: EdgeInsets.all(16.0),
                             child: Center(child: CircularProgressIndicator()),
                           );
-                        } else if (repeatJobState is RepeatJobLoaded && repeatJobState.jobs.isNotEmpty) {
+                        } else if (repeatJobState is RepeatJobLoaded &&
+                            repeatJobState.jobs.isNotEmpty) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 8.0),
                                 child: Text(
                                   'Scheduled Move(s)',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0),
                                 child: Card(
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
-                                    side: BorderSide(color: Colors.grey.shade300, width: 1),
+                                    side: BorderSide(
+                                        color: Colors.grey.shade300, width: 1),
                                   ),
                                   elevation: 0,
                                   child: ListView.separated(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     itemCount: repeatJobState.jobs.length,
-                                    separatorBuilder: (context, idx) => Divider(height: 1, color: Colors.grey.shade200),
+                                    separatorBuilder: (context, idx) => Divider(
+                                        height: 1, color: Colors.grey.shade200),
                                     itemBuilder: (context, idx) {
                                       final job = repeatJobState.jobs[idx];
                                       return ListTile(
-                                        leading: Icon(Icons.local_shipping, size: 36, color: Colors.blueGrey),
-                                        title: Text(job.moveType, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        leading: Icon(Icons.local_shipping,
+                                            size: 36, color: Colors.blueGrey),
+                                        title: Text(job.moveType,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold)),
                                         subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Text('${job.originName} → ${job.destinationName}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                                            Text(
+                                                '${job.originName} → ${job.destinationName}',
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
                                             Text('Scheduled: ${job.jobType}'),
-                                            Text('Date: ${job.originLat != null ? DateTime.now().toString().substring(0, 10) : ''}'), // Replace with actual date if available
+                                            Text(
+                                                'Date: ${job.originLat != null ? DateTime.now().toString().substring(0, 10) : ''}'), // Replace with actual date if available
                                           ],
                                         ),
                                         trailing: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             if (job.passengersCount != null)
-                                              Text('x${job.passengersCount}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              Text('x${job.passengersCount}',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
                                             // Add fare if available
                                           ],
                                         ),
@@ -353,12 +401,15 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
                               ),
                             ],
                           );
-                        } else if (repeatJobState is RepeatJobLoaded && repeatJobState.jobs.isEmpty) {
+                        } else if (repeatJobState is RepeatJobLoaded &&
+                            repeatJobState.jobs.isEmpty) {
                           return const SizedBox();
                         } else if (repeatJobState is RepeatJobError) {
                           return Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: Text('Failed to load scheduled moves: ${repeatJobState.message}', style: TextStyle(color: Colors.red)),
+                            child: Text(
+                                'Failed to load scheduled moves: ${repeatJobState.message}',
+                                style: TextStyle(color: Colors.red)),
                           );
                         } else {
                           return const SizedBox();
@@ -645,6 +696,19 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
             );
           }
         }));
+  }
+
+  void _drawPolyline(LatLng from, LatLng to) {
+    setState(() {
+      _polylines = {
+        Polyline(
+          polylineId: const PolylineId('route'),
+          color: Colors.blue,
+          width: 5,
+          points: [from, to],
+        ),
+      };
+    });
   }
 }
 

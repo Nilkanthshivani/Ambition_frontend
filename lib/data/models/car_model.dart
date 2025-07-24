@@ -1,5 +1,6 @@
 import 'package:ambition_delivery/data/models/vehicle_category_model.dart';
 import 'package:ambition_delivery/domain/entities/car.dart';
+import 'package:ambition_delivery/domain/entities/vehicle_category.dart';
 
 class CarModel extends Car {
   CarModel(
@@ -12,12 +13,20 @@ class CarModel extends Car {
 
   factory CarModel.fromJson(Map<String, dynamic> json) {
     return CarModel(
-      category: VehicleCategoryModel.fromJson(json['category']),
-      make: json['make'],
-      year: json['year'],
-      model: json['model'],
-      color: json['color'],
-      plate: json['plate'],
+      category: json['category'] is Map<String, dynamic>
+          ? VehicleCategory.fromJson(json['category'])
+          : VehicleCategory(
+              id: json['category']?.toString() ?? '',
+              name: '',
+              vehicleType: '',
+              passengerCapacity: 0,
+              fares: null,
+            ),
+      make: json['make'] ?? '',
+      model: json['model'] ?? '',
+      year: json['year'] ?? 0,
+      plate: json['plate'] ?? '',
+      color: json['color'] ?? '',
     );
   }
 

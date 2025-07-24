@@ -81,33 +81,39 @@ class _RideDetailsWidgetState extends State<RideDetailsWidget> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (_isExpanded ) ...[
+                if (_isExpanded) ...[
                   // --- Added points start ---
-                  // Driver's name
-                  if (widget.rideRequest.driver != null) 
-                  Text("Driver: "+(widget.rideRequest.driver?.name ?? 'N/A')),
+
                   // Driver's photo
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundImage: widget.rideRequest.driver?.profile != null && widget.rideRequest.driver!.profile.isNotEmpty
+                        backgroundImage: widget.rideRequest.driver?.profile !=
+                                    null &&
+                                widget.rideRequest.driver!.profile.isNotEmpty
                             ? NetworkImage(widget.rideRequest.driver!.profile)
                             : null,
-                        child: widget.rideRequest.driver?.profile == null || widget.rideRequest.driver!.profile.isEmpty ? Icon(Icons.person) : null,
+                        child: widget.rideRequest.driver?.profile == null ||
+                                widget.rideRequest.driver!.profile.isEmpty
+                            ? Icon(Icons.person)
+                            : null,
                         radius: 20,
                       ),
                       SizedBox(width: 8),
-                      Text(widget.rideRequest.driver?.name ?? "Driver Photo"),
+                      // Text(widget.rideRequest.driver?.name ?? "Driver Photo"),
                     ],
-                  ),
+                  ), // Driver's name
+
+                  Text("Driver Name: " +
+                      (widget.rideRequest.driver?.name ?? 'N/A')),
                   // Driver's rating (mocked),
-                  Text("Rating: 4.8"),
+                  Text("Rating: comming soon"),
                   // Job reference number
                   Text("Job Ref: ${widget.rideRequest.id}"),
                   // ETA (mocked)
-                  Text("ETA: 5 min"),
+                  Text("ETA: comin soon"),
                   // Arrival time (mocked)
-                  Text("Arrival Time: 17:45"),
+                  Text("Arrival Time: coming soon"),
                   // Item list
                   if (widget.rideRequest.items.isNotEmpty ||
                       widget.rideRequest.customItems.isNotEmpty) ...[
