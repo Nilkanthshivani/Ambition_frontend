@@ -192,80 +192,41 @@ class RideRequestBloc extends Bloc<RideRequestEvent, RideRequestState> {
       final rideRequest = await getOngoingRideRequestByUserId(user!['id']);
       if (rideRequest != null) {
         Set<Polyline> polylines = {};
-        polylines.add(
-          Polyline(
-            polylineId: const PolylineId("route"),
-            points: rideRequest.polyline
-                .map((point) =>
-                    LatLng(point.lat.toDouble(), point.lng.toDouble()))
-                .toList(),
-            color: Colors.blue,
-            width: 5,
-          ),
-        );
-
         LocationEntity? carDriverLocation;
-
         if (rideRequest.carDriverId != null) {
           carDriverLocation = await getDriverLocation(rideRequest.carDriverId!);
-          final polylinePoints = await getPolylinePoints({
-            'origin': [
-              carDriverLocation!.coordinates[0],
-              carDriverLocation.coordinates[1]
-            ],
-            'destination': [
-              rideRequest.pickupLocation.coordinates[0],
-              rideRequest.pickupLocation.coordinates[1]
-            ]
-          });
-          polylines.add(
-            Polyline(
-              polylineId: const PolylineId("car_driver_to_pickup"),
-              points: polylinePoints
-                  .map((point) =>
-                      LatLng(point.lat.toDouble(), point.lng.toDouble()))
-                  .toList(),
-              color: Colors.green,
-              width: 5,
-            ),
-          );
+          try {
+            final polylinePoints = await getPolylinePoints({
+              'origin': [
+                carDriverLocation!.coordinates[0],
+                carDriverLocation.coordinates[1]
+              ],
+              'destination': [
+                rideRequest.pickupLocation.coordinates[0],
+                rideRequest.pickupLocation.coordinates[1]
+              ]
+            });
+            polylines.add(
+              Polyline(
+                polylineId: const PolylineId("car_driver_to_pickup"),
+                points: polylinePoints
+                    .map((point) =>
+                        LatLng(point.lat.toDouble(), point.lng.toDouble()))
+                    .toList(),
+                color: Colors.green,
+                width: 5,
+              ),
+            );
+          } catch (e) {
+            print('Failed to fetch polyline: $e');
+            // Continue without polyline
+          }
         }
-
-        if (rideRequest.driverId != null) {
-          final driverLocation = await getDriverLocation(rideRequest.driverId!);
-          final polylinePoints = await getPolylinePoints({
-            'origin': [
-              driverLocation!.coordinates[0],
-              driverLocation.coordinates[1]
-            ],
-            'destination': [
-              rideRequest.pickupLocation.coordinates[0],
-              rideRequest.pickupLocation.coordinates[1]
-            ]
-          });
-          polylines.add(
-            Polyline(
-              polylineId: const PolylineId("driver_to_pickup"),
-              points: polylinePoints
-                  .map((point) =>
-                      LatLng(point.lat.toDouble(), point.lng.toDouble()))
-                  .toList(),
-              color: Colors.green,
-              width: 5,
-            ),
-          );
-          emit(OnGoingUserRideRequestLoaded(
-              rideRequest: rideRequest,
-              driverPosition: driverLocation,
-              carDriverPosition: carDriverLocation,
-              polylines: polylines));
-        } else {
-          emit(OnGoingUserRideRequestLoaded(
-              rideRequest: rideRequest,
-              driverPosition: null,
-              carDriverPosition: carDriverLocation,
-              polylines: polylines));
-        }
+        emit(OnGoingUserRideRequestLoaded(
+            rideRequest: rideRequest,
+            driverPosition: null,
+            carDriverPosition: carDriverLocation,
+            polylines: polylines));
       } else {
         emit(NoOngoingRideRequest());
       }

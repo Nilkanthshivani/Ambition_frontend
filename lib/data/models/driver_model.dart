@@ -53,7 +53,7 @@ class DriverModel extends Driver {
       accountSortCode: json['accountSortCode'],
       status: json['status'],
       location: LocationModel.fromJson(json['location']),
-      car: CarModel.fromJson(json['car']),
+      car: (json['car'] is Map<String, dynamic>) ? CarModel.fromJson(json['car']) : CarModel.empty(),
     );
   }
 

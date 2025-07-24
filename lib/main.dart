@@ -45,6 +45,10 @@ Future<void> main() async {
       print('APNs token not available');
     }
   }
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  if (kDebugMode) {
+    print('FCM token: $fcmToken');
+  }
   initPlatformState();
   runApp(const MyApp());
 }

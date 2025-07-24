@@ -78,4 +78,15 @@ class CarModel extends Car {
             ))
         .toList();
   }
+
+  static CarModel empty() {
+    return CarModel(
+      category: VehicleCategoryModel.empty(),
+      make: '',
+      year: 0,
+      model: '',
+      color: '',
+      plate: '',
+    );
+  }
 }

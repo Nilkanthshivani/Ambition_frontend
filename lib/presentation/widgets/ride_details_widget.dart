@@ -81,7 +81,44 @@ class _RideDetailsWidgetState extends State<RideDetailsWidget> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (_isExpanded) ...[
+                if (_isExpanded ) ...[
+                  // --- Added points start ---
+                  // Driver's name
+                  if (widget.rideRequest.driver != null) 
+                  Text("Driver: "+(widget.rideRequest.driver?.name ?? 'N/A')),
+                  // Driver's photo
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: widget.rideRequest.driver?.profile != null && widget.rideRequest.driver!.profile.isNotEmpty
+                            ? NetworkImage(widget.rideRequest.driver!.profile)
+                            : null,
+                        child: widget.rideRequest.driver?.profile == null || widget.rideRequest.driver!.profile.isEmpty ? Icon(Icons.person) : null,
+                        radius: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(widget.rideRequest.driver?.name ?? "Driver Photo"),
+                    ],
+                  ),
+                  // Driver's rating (mocked),
+                  Text("Rating: 4.8"),
+                  // Job reference number
+                  Text("Job Ref: ${widget.rideRequest.id}"),
+                  // ETA (mocked)
+                  Text("ETA: 5 min"),
+                  // Arrival time (mocked)
+                  Text("Arrival Time: 17:45"),
+                  // Item list
+                  if (widget.rideRequest.items.isNotEmpty ||
+                      widget.rideRequest.customItems.isNotEmpty) ...[
+                    SizedBox(height: 8),
+                    Text('Item List:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    ...widget.rideRequest.items.map((item) => Text(item.name)),
+                    ...widget.rideRequest.customItems
+                        .map((item) => Text(item.name)),
+                  ],
+                  // --- Added points end ---
                   Text(
                       "Pickup Location: ${widget.rideRequest.pickupLocation.name}"),
                   Text(

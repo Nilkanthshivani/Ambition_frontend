@@ -119,7 +119,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           (() {
                             // Try to get the logged-in user's email from local storage
                             try {
-                              final prefs = WidgetsBinding.instance.window.defaultRouteName;
+                              final prefs = WidgetsBinding
+                                  .instance.window.defaultRouteName;
                               // This is a placeholder; replace with your actual method to get the user from local storage
                               // For example, use getCurrentUser() if available
                               // final user = getCurrentUser();

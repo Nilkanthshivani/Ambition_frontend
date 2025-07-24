@@ -303,7 +303,18 @@ class _SignupPageState extends State<SignupPage> {
         if (_selectedItem == 'Passenger') {
           _handlePassengerSignUp(context, idToken: googleAuth.idToken!);
         } else if (_selectedItem == 'Driver') {
-          _handleDriverSignUp(context, name: googleUser.displayName, email: googleUser.email);
+          // Prepare DriverFormData with Google name/email
+          final driverFormData = DriverFormData();
+          if (googleUser.displayName != null) driverFormData.nameController.text = googleUser.displayName!;
+          if (googleUser.email != null) driverFormData.emailController.text = googleUser.email!;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DriverSignupAdditionalInfoPage(
+                driverFormData: driverFormData,
+              ),
+            ),
+          );
         }
       } else {
         print("❌ Firebase user is null or idToken is null.");
@@ -318,42 +329,42 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   void _handlePassengerSignUp(BuildContext context, {String? idToken}) {
-    if (_formKey.currentState!.validate()) {
-      final phoneNumber = driverFormData.phoneNumber ?? "";
-      if (idToken != null) {
-        // Google sign-in flow
-        Position position = driverFormData.currentLocation ?? Position(
-          latitude: 0,
-          longitude: 0,
-          timestamp: DateTime.now(),
-          accuracy: 0,
-          altitude: 0,
-          heading: 0,
-          speed: 0,
-          speedAccuracy: 0,
-          altitudeAccuracy: 0,
-          headingAccuracy: 0,
-        );
-        final requestBody = {
-          'idToken': idToken,
-          'latitude': position.latitude.toString(),
-          'longitude': position.longitude.toString(),
-        };
-        log('🚀 Passenger creation request body: $requestBody');
-        context.read<AuthBloc>().add(SignInWithGoogleEvent(
-          idToken: idToken,
-          latitude: position.latitude.toString(),
-          longitude: position.longitude.toString(),
-        ));
-      } else {
-        // Email sign-up flow
+    if (idToken != null) {
+      // Google sign-in flow: do NOT require phone number
+      Position position = driverFormData.currentLocation ?? Position(
+        latitude: 0,
+        longitude: 0,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 0,
+        speedAccuracy: 0,
+        altitudeAccuracy: 0,
+        headingAccuracy: 0,
+      );
+      final requestBody = {
+        'idToken': idToken,
+        'latitude': position.latitude.toString(),
+        'longitude': position.longitude.toString(),
+      };
+      log('�� Passenger creation request body: $requestBody');
+      context.read<AuthBloc>().add(SignInWithGoogleEvent(
+        idToken: idToken,
+        latitude: position.latitude.toString(),
+        longitude: position.longitude.toString(),
+      ));
+    } else {
+      // Email sign-up flow: require phone number
+      if (_formKey.currentState!.validate()) {
+        final phoneNumber = driverFormData.phoneNumber ?? "";
         context
             .read<AuthBloc>()
             .add(SendUserTempOtpEvent(otp: {'phone': phoneNumber}));
+      } else {
+        context.read<AuthBloc>().add(
+            const InvalidFormEvent(message: "Please fill a valid phone number"));
       }
-    } else {
-      context.read<AuthBloc>().add(
-          const InvalidFormEvent(message: "Please fill a valid phone number"));
     }
   }
 

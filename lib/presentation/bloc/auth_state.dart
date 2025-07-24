@@ -104,3 +104,8 @@ class DriverTempOtpSent extends AuthState {}
 class DriverTempOtpVerified extends AuthState {}
 
 class DriverTempOtpResent extends AuthState {}
+
+class AuthPhoneNumberRequired extends AuthState {
+  final Map<String, dynamic> user;
+  const AuthPhoneNumberRequired({required this.user});
+}

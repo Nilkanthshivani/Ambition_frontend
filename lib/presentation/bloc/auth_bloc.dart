@@ -799,8 +799,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         latitude: event.latitude,
         longitude: event.longitude,
       );
+      final user = result['user'];
+      if (user['phone'] == null || user['phone'].isEmpty) {
+        emit(AuthPhoneNumberRequired(user: user));
+        return;
+      }
       await saveToken(result['token']);
-      await saveUserLocally(result['user']);
+      await saveUserLocally(user);
       emit(AuthSuccess());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));

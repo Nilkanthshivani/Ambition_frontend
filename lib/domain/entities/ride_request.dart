@@ -4,6 +4,7 @@ import 'package:ambition_delivery/domain/entities/location_entity.dart';
 import 'package:ambition_delivery/domain/entities/other_requirements_entity.dart';
 import 'package:ambition_delivery/domain/entities/polyline_point_entity.dart';
 import 'package:ambition_delivery/domain/entities/ride_fare.dart';
+import 'package:ambition_delivery/domain/entities/driver.dart';
 
 class RideRequest {
   final String id;
@@ -29,6 +30,7 @@ class RideRequest {
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Driver? driver;
 
   RideRequest({
     required this.id,
@@ -54,5 +56,6 @@ class RideRequest {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.driver,
   });
 }

@@ -11,6 +11,7 @@ import 'package:ambition_delivery/presentation/bloc/socket_state.dart';
 import 'package:ambition_delivery/presentation/bloc/repeat_job_bloc.dart';
 import 'package:ambition_delivery/presentation/bloc/repeat_job_state.dart';
 import 'package:ambition_delivery/presentation/widgets/ride_details_widget.dart';
+import 'package:ambition_delivery/presentation/widgets/ongoing_ride_details_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
@@ -173,6 +174,9 @@ class _PassengerMainPageState extends State<PassengerMainPage> {
         child: BlocBuilder<RideRequestBloc, RideRequestState>(
             builder: (context, state) {
           debugPrint("State: $state");
+          if (state is OnGoingUserRideRequestLoaded) {
+            debugPrint("Ongoing ride status: "+state.rideRequest.status);
+          }
           if (state is RideRequestLoading) {
             return const Scaffold(
               body: Center(

@@ -1,3 +1,5 @@
 {
-    "breadcrumbs.enabled": true
+    "breadcrumbs.enabled": true,
+    "dart.flutterSdkPath": "D:\\Softwares\\flutter 3.19.5",
+    "cmake.sourceDirectory": "D:/innoplix projects/Ambition_frontend/linux"
 }

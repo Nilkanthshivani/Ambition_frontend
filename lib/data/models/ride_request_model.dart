@@ -6,6 +6,7 @@ import 'package:ambition_delivery/domain/entities/ride_request.dart';
 
 import 'custom_item_model.dart';
 import 'other_requirements_model.dart';
+import 'driver_model.dart';
 
 class RideRequestModel extends RideRequest {
   RideRequestModel(
@@ -31,7 +32,8 @@ class RideRequestModel extends RideRequest {
       required super.requirements,
       required super.status,
       required super.createdAt,
-      required super.updatedAt});
+      required super.updatedAt,
+      required super.driver});
 
   factory RideRequestModel.fromJson(Map<String, dynamic> json) {
     return RideRequestModel(
@@ -66,6 +68,7 @@ class RideRequestModel extends RideRequest {
       status: json['status'],
       createdAt: DateTime.parse(json['createdAt']).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt']).toLocal(),
+      driver: json['driver'] != null ? DriverModel.fromJson(json['driver']) : null,
     );
   }
 
@@ -74,6 +77,7 @@ class RideRequestModel extends RideRequest {
       'id': super.id,
       'user': super.user,
       'driverId': super.driverId,
+      
       'carDriverId': super.carDriverId,
       'vehicleCategory': super.vehicleCategory,
       'carCategory': super.carCategory,
@@ -125,6 +129,7 @@ class RideRequestModel extends RideRequest {
       status: super.status,
       createdAt: super.createdAt,
       updatedAt: super.updatedAt,
+      driver: super.driver,
     );
   }
 
@@ -153,6 +158,7 @@ class RideRequestModel extends RideRequest {
       status: entity.status,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      driver: entity.driver,
     );
   }
 

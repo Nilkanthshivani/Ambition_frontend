@@ -68,4 +68,14 @@ class VehicleCategoryModel extends VehicleCategory {
       List<VehicleCategoryModel> list) {
     return list.map((item) => item.toJson()).toList();
   }
+
+  static VehicleCategoryModel empty() {
+    return VehicleCategoryModel(
+      id: '',
+      name: '',
+      vehicleType: '',
+      passengerCapacity: 0,
+      fares: null,
+    );
+  }
 }
