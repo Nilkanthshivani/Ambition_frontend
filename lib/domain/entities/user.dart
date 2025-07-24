@@ -7,7 +7,7 @@ class User {
   final String name;
   final String email;
   final String profile;
-  final String phone;
+  final String? phone;
   final LocationEntity location;
 
   User({
@@ -15,7 +15,7 @@ class User {
     required this.name,
     required this.email,
     required this.profile,
-    required this.phone,
+    this.phone,
     required this.location,
   });
 }

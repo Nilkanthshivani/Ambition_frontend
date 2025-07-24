@@ -99,9 +99,9 @@ class _PassengerProfilePageState extends State<PassengerProfilePage> {
             initialEmail = state.user.email;
             initialPhoneNumber = state.user.phone;
 
-            _nameController.text = initialName!;
-            _emailController.text = initialEmail!;
-            _phoneNumberController.text = initialPhoneNumber!;
+            _nameController.text = initialName ?? '';
+            _emailController.text = initialEmail ?? '';
+            _phoneNumberController.text = initialPhoneNumber ?? '';
 
             return SingleChildScrollView(
               child: Padding(

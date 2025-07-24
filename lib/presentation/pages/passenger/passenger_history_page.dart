@@ -214,9 +214,9 @@ class RideRequestCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$type: ${location.name}',
+        Text('$type: ${location.name ?? ''}',
             style: const TextStyle(fontWeight: FontWeight.w500)),
-        Text(location.address, style: const TextStyle(fontSize: 12)),
+        Text(location.address ?? '', style: const TextStyle(fontSize: 12)),
       ],
     );
   }

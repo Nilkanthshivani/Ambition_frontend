@@ -7,6 +7,8 @@ import 'package:ambition_delivery/presentation/pages/passenger/passenger_profile
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerHomePage extends StatefulWidget {
   const PassengerHomePage({super.key});
@@ -26,13 +28,40 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
     'Passenger Profile',
   ];
 
+  late Future<Map<String, dynamic>?> userFuture;
+
+  Future<Map<String, dynamic>?> loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
+    if (userJson != null) {
+      final decoded = jsonDecode(userJson);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+    }
+    return null;
+  }
+
+  void refreshUser() {
+    setState(() {
+      userFuture = loadUser();
+    });
+  }
+
   @override
   void initState() {
     // Fetch user location
     BlocProvider.of<RideRequestBloc>(context).add(UpdateUserLocationEvent());
     // Fetch user profile
     BlocProvider.of<ProfileBloc>(context).add(GetProfile());
+    userFuture = loadUser();
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    refreshUser(); // Refresh user info after navigation
   }
 
   @override
@@ -45,17 +74,27 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: BlocBuilder<ProfileBloc, ProfileState>(
-                builder: (context, state) {
-                  if (state is ProfileLoaded) {
+            Container(
+              color: Colors.blue,
+              padding: const EdgeInsets.only(
+                  top: 40, left: 16, right: 16, bottom: 16),
+              child: FutureBuilder<Map<String, dynamic>?>(
+                future: userFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasData && snapshot.data != null) {
+                    final user = snapshot.data!;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        state.user.profile.isEmpty
+                        (user['profile'] == null || user['profile'].isEmpty)
                             ? const CircleAvatar(
                                 radius: 30,
                                 backgroundColor: Colors.white,
@@ -68,69 +107,19 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             : CircleAvatar(
                                 radius: 30,
                                 backgroundColor: Colors.white,
-                                backgroundImage:
-                                    NetworkImage(state.user.profile),
+                                backgroundImage: NetworkImage(user['profile']),
                               ),
                         const SizedBox(height: 10),
                         Text(
-                          "Welcome, ${state.user.name}",
+                          "Welcome, ${user['name'] ?? 'User'}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                           ),
                         ),
                         Text(
-                          state.user.email,
+                          user['email'] ?? 'user@example.com',
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    );
-                  } else if (state is ProfileLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.white),
-                      ),
-                    );
-                  } else {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.account_circle,
-                            size: 50,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          "Welcome, User",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
-                        Text(
-                          (() {
-                            // Try to get the logged-in user's email from local storage
-                            try {
-                              final prefs = WidgetsBinding
-                                  .instance.window.defaultRouteName;
-                              // This is a placeholder; replace with your actual method to get the user from local storage
-                              // For example, use getCurrentUser() if available
-                              // final user = getCurrentUser();
-                              // return user?['email'] ?? 'user@example.com';
-                              return 'user@example.com';
-                            } catch (_) {
-                              return 'user@example.com';
-                            }
-                          })(),
-                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                           ),
@@ -138,6 +127,37 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       ],
                     );
                   }
+                  // fallback UI
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.account_circle,
+                          size: 50,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Welcome, User",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
+                      ),
+                      const Text(
+                        'user@example.com',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  );
                 },
               ),
             ),

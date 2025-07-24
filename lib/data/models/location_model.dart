@@ -4,15 +4,15 @@ class LocationModel extends LocationEntity {
   LocationModel(
       {required super.type,
       required super.coordinates,
-      required super.name,
-      required super.address});
+      super.name,
+      super.address});
 
   factory LocationModel.fromJson(Map<String, dynamic> json) {
     return LocationModel(
       type: json['type'],
       coordinates: List<num>.from(json['coordinates']),
-      name: json['name'] ?? '',
-      address: json['address'] ?? '',
+      name: json['name'],
+      address: json['address'],
     );
   }
 

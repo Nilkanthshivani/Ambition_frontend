@@ -56,8 +56,11 @@ class _SignupPageState extends State<SignupPage> {
         SnackBar(content: Text(state.error)),
       );
     }
-    if (state is AuthSuccess) {}
-
+    if (state is AuthSuccess) {
+      print('Navigating to /passenger_home after AuthSuccess');
+      Navigator.pushNamedAndRemoveUntil(
+          context, '/passenger_home', (route) => false);
+    }
     if (state is UserTempOtpSent) {
       Navigator.pushNamed(context, '/passenger_signup_otp',
           arguments: driverFormData.phoneNumber ?? "");

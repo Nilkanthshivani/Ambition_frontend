@@ -251,49 +251,76 @@ class RideRequestBloc extends Bloc<RideRequestEvent, RideRequestState> {
     try {
       emit(RideRequestLoading());
       final user = getLocalUser();
-      final driverPosition = await fetchCurrentLocation();
       final rideRequest = await getOngoingRideRequestByDriverId(user!['id']);
-      if (rideRequest != null) {
+      // Check both driverId and carDriverId
+      print('rideRequest.driverId: ${rideRequest?.driverId}');
+      print('rideRequest.carDriverId: ${rideRequest?.carDriverId}');
+      print('current user id: ${user['id']}');
+      if (rideRequest != null &&
+          (rideRequest.driverId == user['id'] ||
+              rideRequest.carDriverId == user['id'])) {
+        print('Emitting OnGoingRideRequestLoaded for ride: ${rideRequest.id}');
+        final driverPosition = await fetchCurrentLocation();
         final userPostion = await getUserLocation(rideRequest.user);
-        final polylinePoints = await getPolylinePoints({
-          'origin': [driverPosition.latitude, driverPosition.longitude],
-          'destination': [
-            rideRequest.pickupLocation.coordinates[0],
-            rideRequest.pickupLocation.coordinates[1]
-          ]
-        });
-        Set<Polyline> polylines = {};
-        polylines.add(
-          Polyline(
-            polylineId: const PolylineId("route"),
-            points: rideRequest.polyline
-                .map((point) =>
-                    LatLng(point.lat.toDouble(), point.lng.toDouble()))
-                .toList(),
-            color: Colors.blue,
-            width: 5,
-          ),
-        );
-
-        polylines.add(
-          Polyline(
-            polylineId: const PolylineId("current_to_pickup"),
-            points: polylinePoints
-                .map((point) =>
-                    LatLng(point.lat.toDouble(), point.lng.toDouble()))
-                .toList(),
-            color: Colors.green,
-            width: 5,
-          ),
-        );
-
+        List<Polyline> polylines = [];
+        try {
+          final polylinePoints = await getPolylinePoints({
+            'origin': driverPosition != null
+                ? [driverPosition.latitude, driverPosition.longitude]
+                : rideRequest.pickupLocation.coordinates,
+            'destination': rideRequest.pickupLocation.coordinates,
+          });
+          if (polylinePoints.isNotEmpty) {
+            polylines.add(
+              Polyline(
+                polylineId: const PolylineId("pickup_route"),
+                points: polylinePoints
+                    .map((point) =>
+                        LatLng(point.lat.toDouble(), point.lng.toDouble()))
+                    .toList(),
+                color: Colors.blue,
+                width: 5,
+              ),
+            );
+          } else {
+            // Fallback: straight line from driver to pickup
+            polylines.add(
+              Polyline(
+                polylineId: const PolylineId("pickup_route_fallback"),
+                points: [
+                  LatLng(driverPosition.latitude, driverPosition.longitude),
+                  LatLng(rideRequest.pickupLocation.coordinates[0].toDouble(),
+                      rideRequest.pickupLocation.coordinates[1].toDouble()),
+                ],
+                color: Colors.red,
+                width: 3,
+              ),
+            );
+          }
+        } catch (e) {
+          print('Failed to fetch polyline: $e');
+          // Fallback: straight line from driver to pickup
+          polylines.add(
+            Polyline(
+              polylineId: const PolylineId("pickup_route_fallback"),
+              points: [
+                LatLng(driverPosition.latitude, driverPosition.longitude),
+                LatLng(rideRequest.pickupLocation.coordinates[0].toDouble(),
+                    rideRequest.pickupLocation.coordinates[1].toDouble()),
+              ],
+              color: Colors.red,
+              width: 3,
+            ),
+          );
+        }
         emit(OnGoingRideRequestLoaded(
           rideRequest: rideRequest,
           driverPosition: driverPosition,
           userPosition: userPostion!,
-          polylines: polylines,
+          polylines: polylines.toSet(),
         ));
       } else {
+        print('Emitting NoOngoingRideRequest');
         emit(NoOngoingRideRequest());
       }
     } on DioException catch (e) {

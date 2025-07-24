@@ -126,14 +126,14 @@ class _RideDetailsWidgetState extends State<RideDetailsWidget> {
                   ],
                   // --- Added points end ---
                   Text(
-                      "Pickup Location: ${widget.rideRequest.pickupLocation.name}"),
+                      "Pickup Location: ${widget.rideRequest.pickupLocation.name ?? ''}"),
                   Text(
-                      "Pickup Address: ${widget.rideRequest.pickupLocation.address}"),
+                      "Pickup Address: ${widget.rideRequest.pickupLocation.address ?? ''}"),
                   const SizedBox(height: 8),
                   Text(
-                      "Dropoff Location: ${widget.rideRequest.dropoffLocation.name}"),
+                      "Dropoff Location: ${widget.rideRequest.dropoffLocation.name ?? ''}"),
                   Text(
-                      "Dropoff Address: ${widget.rideRequest.dropoffLocation.address}"),
+                      "Dropoff Address: ${widget.rideRequest.dropoffLocation.address ?? ''}"),
                   const SizedBox(height: 8),
                   //Get Directions button
                   Row(

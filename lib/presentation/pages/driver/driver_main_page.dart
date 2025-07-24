@@ -17,6 +17,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_switch/flutter_switch.dart';
+import 'package:ambition_delivery/utils/utility_functions.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DriverMainPage extends StatefulWidget {
   const DriverMainPage({super.key});
@@ -35,6 +37,7 @@ class _DriverMainPageState extends State<DriverMainPage> {
   LocationEntity? userPosition;
   // Add isOnline state
   bool isOnline = true;
+  bool _isExpanded = false;
   Future<void> _checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -218,24 +221,253 @@ class _DriverMainPageState extends State<DriverMainPage> {
                     },
                     polylines: state.polylines,
                   ),
-                  RideDetailsWidget(
-                    rideRequest: rideRequest,
-                    originPlace: (_currentPosition?.latitude != null &&
-                            _currentPosition?.longitude != null)
-                        ? LocationEntity(
-                            name: "current location",
-                            address: "current address",
-                            coordinates: [
-                              _currentPosition!.latitude.toDouble(),
-                              _currentPosition!.longitude.toDouble(),
-                            ],
-                            type: "Point",
+                  // Driver-specific bottom sheet for ongoing ride
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: EdgeInsets.zero,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10.0,
                           )
-                        : null,
-                    destinationPlace: rideRequest.dropoffLocation,
-                    waypointsPlaces: [
-                      rideRequest.pickupLocation,
-                    ],
+                        ],
+                      ),
+                      constraints: BoxConstraints(
+                        maxHeight: _isExpanded ? 600 : 80,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    "Ongoing Ride Details",
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blueAccent),
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    icon: Icon(_isExpanded
+                                        ? Icons.expand_more
+                                        : Icons.expand_less),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isExpanded = !_isExpanded;
+                                      });
+                                    },
+                                  )
+                                ],
+                              ),
+                              if (_isExpanded) ...[
+                                // Customer info section
+                                Text(
+                                  "Customer's name: ",
+                                ), 
+                                Text("Customer's rating: coming soon"),
+                                // Job reference number
+                                Text("Job Ref: ${rideRequest.id}"),
+                                // Job price
+                                Text("Job Price: £${rideRequest.fare.total}"),
+                                // Job requirements
+                                Text("Requirements: " +
+                                    (rideRequest.requirements
+                                            .specialRequirements.isNotEmpty
+                                        ? rideRequest
+                                            .requirements.specialRequirements
+                                        : 'None')),
+                                // Item list
+                                Text(
+                                    "Items: ${(rideRequest.items.length + rideRequest.customItems.length).toString()}"),
+                                if (rideRequest.items.isNotEmpty ||
+                                    rideRequest.customItems.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  const Text("Item List:",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  ...rideRequest.items.map((item) =>
+                                      Text("- ${item.name} x${item.qty}")),
+                                  ...rideRequest.customItems.map((item) =>
+                                      Text("- ${item.name} x${item.quantity}")),
+                                ],
+                                // ETA
+                                Text("ETA to Pickup: ${rideRequest.time} min"),
+                                // The rest of the old RideDetailsWidget points (except driver info)
+                                Text(
+                                    "Pickup Location: ${rideRequest.pickupLocation.name ?? ''}"),
+                                Text(
+                                    "Pickup Address: ${rideRequest.pickupLocation.address ?? ''}"),
+                                const SizedBox(height: 8),
+                                Text(
+                                    "Dropoff Location: ${rideRequest.dropoffLocation.name ?? ''}"),
+                                Text(
+                                    "Dropoff Address: ${rideRequest.dropoffLocation.address ?? ''}"),
+                                const SizedBox(height: 8),
+                                //Get Directions button
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text("Get Directions:"),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.grey[200],
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        // Launch Google Maps navigation to pickup address
+                                        final lat = rideRequest
+                                            .pickupLocation.coordinates[0];
+                                        final lng = rideRequest
+                                            .pickupLocation.coordinates[1];
+                                        final url =
+                                            'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving';
+                                        // Use url_launcher or your UtilityFunctions.openMap
+                                        UtilityFunctions.openMap(
+                                          originPlace: null,
+                                          destinationPlace:
+                                              rideRequest.pickupLocation,
+                                          waypointsPlaces: [],
+                                        );
+                                        // Or, if you want to use url_launcher directly:
+                                        // launchUrl(Uri.parse(url));
+                                      },
+                                      child: const Icon(Icons.navigation,
+                                          color: Colors.blue, size: 30),
+                                    ),
+                                  ],
+                                ),
+                                Text("Distance: ${rideRequest.distance} km"),
+                                Text("Fare: ${rideRequest.fare.total}"),
+                                Text("Status: ${rideRequest.status}"),
+                                // Row for buttons
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          //show dialog
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text(
+                                                  "Complete Ride Request"),
+                                              content: const Text(
+                                                  "Are you sure you want to complete the ride request?"),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text("No"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    BlocProvider.of<
+                                                                RideRequestBloc>(
+                                                            context)
+                                                        .add(
+                                                            CompleteRideRequestEvent(
+                                                                rideId:
+                                                                    rideRequest
+                                                                        .id));
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text("Yes"),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green),
+                                        child: const Text("Complete Ride",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          //show dialog
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text(
+                                                  "Cancel Ride Request"),
+                                              content: const Text(
+                                                  "Are you sure you want to cancel the ride request?"),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text("No"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    BlocProvider.of<
+                                                                RideRequestBloc>(
+                                                            context)
+                                                        .add(
+                                                            CancelRideRequestEvent(
+                                                                rideId:
+                                                                    rideRequest
+                                                                        .id));
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text("Yes"),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red),
+                                        child: const Text("Cancel Ride",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Swipe-to-confirm button (replace with your own widget if needed)
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Confirm action
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(30)),
+                                    minimumSize: Size(double.infinity, 48),
+                                  ),
+                                  child: const Text("Swipe to Confirm Pickup",
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ]),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -256,48 +488,69 @@ class _DriverMainPageState extends State<DriverMainPage> {
                             padding: EdgeInsets.all(16.0),
                             child: Center(child: CircularProgressIndicator()),
                           );
-                        } else if (repeatJobState is RepeatJobLoaded && repeatJobState.jobs.isNotEmpty) {
+                        } else if (repeatJobState is RepeatJobLoaded &&
+                            repeatJobState.jobs.isNotEmpty) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 8.0),
                                 child: Text(
                                   'Scheduled Move(s)',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0),
                                 child: Card(
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
-                                    side: BorderSide(color: Colors.grey.shade300, width: 1),
+                                    side: BorderSide(
+                                        color: Colors.grey.shade300, width: 1),
                                   ),
                                   elevation: 0,
                                   child: ListView.separated(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     itemCount: repeatJobState.jobs.length,
-                                    separatorBuilder: (context, idx) => Divider(height: 1, color: Colors.grey.shade200),
+                                    separatorBuilder: (context, idx) => Divider(
+                                        height: 1, color: Colors.grey.shade200),
                                     itemBuilder: (context, idx) {
                                       final job = repeatJobState.jobs[idx];
                                       return ListTile(
-                                        leading: Icon(Icons.local_shipping, size: 36, color: Colors.blueGrey),
-                                        title: Text(job.moveType, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        leading: Icon(Icons.local_shipping,
+                                            size: 36, color: Colors.blueGrey),
+                                        title: Text(job.moveType,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold)),
                                         subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Text('${job.originName} → ${job.destinationName}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                                            Text(
+                                                '${job.originName} → ${job.destinationName}',
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
                                             Text('Scheduled: ${job.jobType}'),
-                                            Text('Date: ${job.originLat != null ? DateTime.now().toString().substring(0, 10) : ''}'), // Replace with actual date if available
+                                            Text(
+                                                'Date: ${job.originLat != null ? DateTime.now().toString().substring(0, 10) : ''}'), // Replace with actual date if available
                                           ],
                                         ),
                                         trailing: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             if (job.passengersCount != null)
-                                              Text('x${job.passengersCount}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              Text('x${job.passengersCount}',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
                                             // Add fare if available
                                           ],
                                         ),
@@ -308,12 +561,15 @@ class _DriverMainPageState extends State<DriverMainPage> {
                               ),
                             ],
                           );
-                        } else if (repeatJobState is RepeatJobLoaded && repeatJobState.jobs.isEmpty) {
+                        } else if (repeatJobState is RepeatJobLoaded &&
+                            repeatJobState.jobs.isEmpty) {
                           return const SizedBox();
                         } else if (repeatJobState is RepeatJobError) {
                           return Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: Text('Failed to load scheduled moves: ${repeatJobState.message}', style: TextStyle(color: Colors.red)),
+                            child: Text(
+                                'Failed to load scheduled moves: ${repeatJobState.message}',
+                                style: TextStyle(color: Colors.red)),
                           );
                         } else {
                           return const SizedBox();
@@ -330,7 +586,8 @@ class _DriverMainPageState extends State<DriverMainPage> {
               body: Stack(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 100), // Height of the card + margin
+                    padding: const EdgeInsets.only(
+                        bottom: 100), // Height of the card + margin
                     child: Column(
                       children: [
                         // Map, buttons, online button, etc.
@@ -343,7 +600,8 @@ class _DriverMainPageState extends State<DriverMainPage> {
                           child: GoogleMap(
                             initialCameraPosition: CameraPosition(
                               target: _currentPosition != null
-                                  ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+                                  ? LatLng(_currentPosition!.latitude,
+                                      _currentPosition!.longitude)
                                   : const LatLng(51.456, 0.1313),
                               zoom: 14,
                             ),
@@ -352,19 +610,24 @@ class _DriverMainPageState extends State<DriverMainPage> {
                               if (_currentPosition != null)
                                 Marker(
                                   markerId: const MarkerId("current"),
-                                  position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-                                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-                                  infoWindow: const InfoWindow(title: "Your Location"),
+                                  position: LatLng(_currentPosition!.latitude,
+                                      _currentPosition!.longitude),
+                                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                                      BitmapDescriptor.hueBlue),
+                                  infoWindow:
+                                      const InfoWindow(title: "Your Location"),
                                 ),
                             },
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 8.0),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
                             onPressed: () {
                               // Add your logic here
@@ -411,12 +674,15 @@ class _DriverMainPageState extends State<DriverMainPage> {
                                 : ListView.builder(
                                     itemCount: rideRequests.length,
                                     itemBuilder: (context, index) {
-                                      RideRequest rideRequest = rideRequests[index]!;
+                                      RideRequest rideRequest =
+                                          rideRequests[index]!;
                                       return AvailableJobsCard(
                                         avilableJob: rideRequest,
                                         onAccept: () {
-                                          BlocProvider.of<RideRequestBloc>(context)
-                                              .add(UpdateRideRequestEvent(id: rideRequest.id));
+                                          BlocProvider.of<RideRequestBloc>(
+                                                  context)
+                                              .add(UpdateRideRequestEvent(
+                                                  id: rideRequest.id));
                                         },
                                       );
                                     },
@@ -434,7 +700,8 @@ class _DriverMainPageState extends State<DriverMainPage> {
                       margin: EdgeInsets.zero, // No margin, full width
                       color: Colors.white,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(16)),
                         side: BorderSide(color: Colors.grey, width: 0.5),
                       ),
                       elevation: 8,
@@ -452,7 +719,8 @@ class _DriverMainPageState extends State<DriverMainPage> {
                                       style: TextStyle(fontSize: 20)),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2.0),
                                   child: Text(
                                       "£${state.rideRequests.totalEarnings.toStringAsFixed(2)}",
                                       style: const TextStyle(fontSize: 20)),
@@ -468,8 +736,10 @@ class _DriverMainPageState extends State<DriverMainPage> {
                                       style: TextStyle(fontSize: 20)),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2.0),
-                                  child: Text("${state.rideRequests.totalRides}",
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2.0),
+                                  child: Text(
+                                      "${state.rideRequests.totalRides}",
                                       style: const TextStyle(fontSize: 20)),
                                 ),
                               ],
@@ -571,13 +841,13 @@ class AvailableJobsCard extends StatelessWidget {
             const SizedBox(height: 16),
             const Text('Origin:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(avilableJob.pickupLocation.name),
-            Text(avilableJob.pickupLocation.address),
+            Text(avilableJob.pickupLocation.name ?? ''),
+            Text(avilableJob.pickupLocation.address ?? ''),
             const SizedBox(height: 8),
             const Text('Destination:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(avilableJob.dropoffLocation.name),
-            Text(avilableJob.dropoffLocation.address),
+            Text(avilableJob.dropoffLocation.name ?? ''),
+            Text(avilableJob.dropoffLocation.address ?? ''),
             if (avilableJob.requirements.specialRequirements.isNotEmpty) ...[
               const SizedBox(height: 16),
               const Text('Special Requirements:',

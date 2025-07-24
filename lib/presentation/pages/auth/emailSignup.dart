@@ -4,11 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../bloc/auth_bloc.dart';
 
-
 class EmailSignupPage extends StatefulWidget {
   final String latitude;
   final String longitude;
-  const EmailSignupPage({super.key, required this.latitude, required this.longitude});
+  const EmailSignupPage(
+      {super.key, required this.latitude, required this.longitude});
 
   @override
   State<EmailSignupPage> createState() => _EmailSignupPageState();
@@ -24,11 +24,11 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
     if (!_formKey.currentState!.validate()) return;
 
     context.read<AuthBloc>().add(SignInWithEmailEvent(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-      latitude: widget.latitude,
-      longitude: widget.longitude,
-    ));
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          latitude: widget.latitude,
+          longitude: widget.longitude,
+        ));
   }
 
   @override
@@ -36,7 +36,8 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthSuccess) {
-          Navigator.pushNamedAndRemoveUntil(context, '/passenger_home', (route) => false);
+          Navigator.pushNamedAndRemoveUntil(
+              context, '/passenger_home', (route) => false);
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.error)),
@@ -53,7 +54,8 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30.0),
                 ),
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Form(
@@ -75,13 +77,16 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
                           controller: _emailController,
                           decoration: InputDecoration(
                             hintText: 'Email Address',
-                            prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
+                            prefixIcon: Icon(Icons.email_outlined,
+                                color: Colors.grey[600]),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30.0),
                             ),
                           ),
                           keyboardType: TextInputType.emailAddress,
-                          validator: (value) => value!.contains('@') ? null : "Enter a valid email",
+                          validator: (value) => value!.contains('@')
+                              ? null
+                              : "Enter a valid email",
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
@@ -89,10 +94,13 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             hintText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+                            prefixIcon: Icon(Icons.lock_outline,
+                                color: Colors.grey[600]),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
                                 color: Colors.grey[600],
                               ),
                               onPressed: () {
@@ -105,7 +113,9 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
                               borderRadius: BorderRadius.circular(30.0),
                             ),
                           ),
-                          validator: (value) => value!.length >= 6 ? null : "Min 6 characters required",
+                          validator: (value) => value!.length >= 6
+                              ? null
+                              : "Min 6 characters required",
                         ),
                         const SizedBox(height: 32),
                         SizedBox(
@@ -120,8 +130,11 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
                             child: loading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text('Create Account', style: TextStyle(fontSize: 18, color: Colors.white)),
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white)
+                                : const Text('Create Account',
+                                    style: TextStyle(
+                                        fontSize: 18, color: Colors.white)),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -130,7 +143,8 @@ class _EmailSignupPageState extends State<EmailSignupPage> {
                           children: [
                             const Text("Already have an account?"),
                             TextButton(
-                              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                              style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero),
                               onPressed: () {
                                 Navigator.pushNamedAndRemoveUntil(
                                     context, '/login', (route) => false);

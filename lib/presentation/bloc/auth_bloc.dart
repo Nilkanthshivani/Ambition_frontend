@@ -800,10 +800,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         longitude: event.longitude,
       );
       final user = result['user'];
-      if (user['phone'] == null || user['phone'].isEmpty) {
-        emit(AuthPhoneNumberRequired(user: user));
-        return;
-      }
+      // Removed phone check to allow Google login without phone
       await saveToken(result['token']);
       await saveUserLocally(user);
       emit(AuthSuccess());
