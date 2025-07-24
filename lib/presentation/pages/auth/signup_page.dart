@@ -301,11 +301,11 @@ class _SignupPageState extends State<SignupPage> {
           await FirebaseAuth.instance.signInWithCredential(credential);
       final user = userCredential.user;
 
-      if (user != null && googleAuth.idToken != null) {
+      if (user != null) {
+        final firebaseIdToken = await user.getIdToken();
         if (_selectedItem == 'Passenger') {
-          _handlePassengerSignUp(context, idToken: googleAuth.idToken!);
+          _handlePassengerSignUp(context, idToken: firebaseIdToken);
         } else if (_selectedItem == 'Driver') {
-          // Prepare DriverFormData with Google name/email
           final driverFormData = DriverFormData();
           if (googleUser.displayName != null)
             driverFormData.nameController.text = googleUser.displayName!;
@@ -316,6 +316,7 @@ class _SignupPageState extends State<SignupPage> {
             MaterialPageRoute(
               builder: (context) => DriverSignupAdditionalInfoPage(
                 driverFormData: driverFormData,
+                // firebaseIdToken: firebaseIdToken, // Pass if needed
               ),
             ),
           );
